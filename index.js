@@ -22,6 +22,21 @@ let menuList = [{id:1, cost: 12000}, {id:2, cost: 9000}, {id:3, cost: 8000}, {id
 var serviceWait = 7200
 var count = 1
 
+app.post('/new', async (req, res) => {
+    //Cuando es cuenta divida o Americana
+    if(req.body.mesa.metodo_pago == 'Americano' || req.body.mesa.metodo_pago == 'Dividido'){
+        console.log('Dividido o Americano')
+        await req.body.mesa.clientes.forEach(client => addClientToCola(client, req.body.mesa.hora));
+    }else{
+        //Cuando es cuenta unica o tarjeta
+        console.log('unico')
+        await addClientToCola(req.body.mesa.clientes[0], req.body.mesa.hora)
+    }
+    let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
+    billList.push({factura:{id : ++billCount, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, datos: currentBill}})
+    res.send(billList[billList.length-1])
+})
+
 function addClientToCola(client, hour){
 //id,arrival,arrivalAcum,wait,service,exit,stadin,line
     let client_cola = {id:client.id_client,hour_arrival:0,arrival:0,arrivalAcum:0,wait:0,service:120,exit:0, stading:0}
@@ -55,29 +70,6 @@ function addClientToCola(client, hour){
 
     list_cola.push(client_cola)
 }
-
-app.post('/new', async (req, res) => {
-    //Cuando es cuenta divida o Americana
-    if(req.body.mesa.metodo_pago == 'Americano' || req.body.mesa.metodo_pago == 'Dividido'){
-        console.log('Dividido o Americano')
-        await req.body.mesa.clientes.forEach(client => addClientToCola(client, req.body.mesa.hora));
-    }else{
-        //Cuando es cuenta unica o tarjeta
-        console.log('unico')
-        await addClientToCola(req.body.mesa.clientes[0], req.body.mesa.hora)
-    }
-    let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
-    billList.push({factura:{id : ++billCount, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, datos: currentBill}})
-    res.send(billList[billList.length-1])
-})
-/*
-app.post('/test', (req, res) =>{
-    let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
-    billList.push({factura:{id : billCount++, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, datos: currentBill}})
-    //console.log(currentBill)
-    res.sendStatus(200)
-})
-*/
 
 function generateBill(clients, paymentMethod){
     clients.metodo_pago = paymentMethod
@@ -114,7 +106,6 @@ function dividedMethod(clients, totalCost, platos){
         item.costo_cliente = totalCost / clients.length
         item.platos = platos
     })
-    
     return clients
 }
 

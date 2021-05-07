@@ -12,7 +12,10 @@ let tableList = []
 let idBill = 0;
 var list_cola = []
 var arrivalAcum = 0
+
 let billList = []
+let billCount = 0;
+
 const service = 120
 let menuList = [{id:1, cost: 12000}, {id:2, cost: 9000}, {id:3, cost: 8000}, {id:4, cost: 10000}, {id:5, cost: 5000}, {id:6, cost: 1000}]
 
@@ -63,38 +66,89 @@ app.post('/new', async (req, res) => {
         console.log('unico')
         await addClientToCola(req.body.mesa.clientes[0], req.body.mesa.hora)
     }
-    res.send(list_cola)
+    let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
+    billList.push({factura:{id : ++billCount, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, datos: currentBill}})
+    res.send(billList[billList.length-1])
 })
-
+/*
 app.post('/test', (req, res) =>{
-    generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
+    let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
+    billList.push({factura:{id : billCount++, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, datos: currentBill}})
+    //console.log(currentBill)
     res.sendStatus(200)
 })
+*/
 
 function generateBill(clients, paymentMethod){
+    clients.metodo_pago = paymentMethod
     let totalCost = 0;
-    //let filteredClients = clients.filter(client => client.platos);
-    let filteredClients = clients.map(item =>{
-        //console.log(item.platos[0])
-        item.platos.forEach(order => {
-            //Buscar el costo en la tabla
-            let unitCost = menuList.filter(plato => plato.id == order);
-            totalCost += unitCost[0].cost
-        })
-    })
-    //console.log('filtrado', filteredClients)
-    console.log(totalCost)
-    if(paymentMethod == 'Divido'){
-        //Unir todos los platos y dividir el valor en el numero de clients.
-    }else if(paymentMethod == 'Americano'){
-        //Cada cliente paga lo suyo
-    }else if(paymentMethod == 'Unico'){
-        //Unir todos los platos y sacar una sola cuenta
-    }else{
-        //tarjeta
+    let platos = ``;
+    switch (paymentMethod) {
+        case 'Dividido':
+            clients = dividedMethod(clients, totalCost, platos)
+        break;
+        case 'Americano':
+            clients = americanMethod(clients)
+        break;
+        case 'Unico':
+            clients = onlyOneMethod(clients, totalCost, platos)
+        break;
+        default:
+            console.error('Metodo de pago invalido')
+        break;
     }
+    return clients
 }
 
+function dividedMethod(clients, totalCost, platos){
+    console.log('Dividido')
+    clients.map(item =>{
+        item.platos.forEach(order => {
+            let unitCost = menuList.filter(plato => plato.id == order);
+            totalCost += unitCost[0].cost
+            platos += `${unitCost[0].id}-`
+        })
+        clients.total = totalCost
+    })
+    clients.map(item =>{ 
+        item.costo_cliente = totalCost / clients.length
+        item.platos = platos
+    })
+    
+    return clients
+}
+
+function americanMethod(clients){
+    console.log('Americano')
+    let costPerClient = 0
+    clients.map(item =>{
+        item.platos.forEach(order => {
+            let unitCost = menuList.filter(plato => plato.id == order);
+            costPerClient += unitCost[0].cost
+        })
+        item.costo_cliente = costPerClient;
+        costPerClient = 0;
+    })
+    return clients
+}
+
+function onlyOneMethod(clients, totalCost, platos){
+    console.log('Unico o Tarjeta')
+        clients.map(item =>{
+            item.platos.forEach(order => {
+                let unitCost = menuList.filter(plato => plato.id == order);
+                totalCost += unitCost[0].cost
+                platos += `*${unitCost[0].id}-`
+            })
+        })
+        clients.total = totalCost
+        clients.platos = platos
+        return clients
+}
+
+app.get('/bill', (req, res) => {
+    res.send(billList)
+})
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)

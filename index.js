@@ -4,8 +4,6 @@ const bodyParser = require('body-parser');
 const app = express()
 app.use(bodyParser.json())
 
-const PORT = process.env.PORT || 3001
-
 let tableList = []
 
 
@@ -149,6 +147,7 @@ app.get('/queue', (req, res) => {
     res.send(list_queue)
 })
 
-app.listen(PORT, () => {
-  console.log(`Example app listening at http://localhost:${PORT}`)
-})
+app.set('port', process.env.PORT || 3001);
+app.listen(app.get('port'), () =>
+    console.log(`Server on port ${app.get('port')}`)
+);

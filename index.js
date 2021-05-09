@@ -149,6 +149,8 @@ app.get('/queue', (req, res) => {
     res.send(list_queue)
 })
 
-app.listen(port, () => {
+app.set('port', process.env.PORT || 3001);
+
+app.listen(app.get('port'), () => {
   console.log(`Example app listening at http://localhost:${port}`)
 })

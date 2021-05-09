@@ -139,6 +139,10 @@ function onlyOneMethod(clients, totalCost, platos){
         return clients
 }
 
+app.get('/', (req, res) => {
+    res.send('Cajero...')
+})
+
 app.get('/bill', (req, res) => {
     res.send(billList)
 })

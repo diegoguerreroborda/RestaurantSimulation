@@ -10,13 +10,12 @@ let tableList = []
 
 
 let idBill = 0;
-var list_cola = []
+var list_queue = []
 var arrivalAcum = 0
 
 let billList = []
 let billCount = 0;
 
-const service = 120
 let menuList = [{id:1, cost: 12000}, {id:2, cost: 9000}, {id:3, cost: 8000}, {id:4, cost: 10000}, {id:5, cost: 5000}, {id:6, cost: 1000}]
 
 var serviceWait = 7200
@@ -26,49 +25,54 @@ app.post('/new', async (req, res) => {
     //Cuando es cuenta divida o Americana
     if(req.body.mesa.metodo_pago == 'Americano' || req.body.mesa.metodo_pago == 'Dividido'){
         console.log('Dividido o Americano')
-        await req.body.mesa.clientes.forEach(client => addClientToCola(client, req.body.mesa.hora));
-    }else{
-        //Cuando es cuenta unica o tarjeta
-        console.log('unico')
-        await addClientToCola(req.body.mesa.clientes[0], req.body.mesa.hora)
-    }
+        await req.body.mesa.clientes.forEach(client => addClientToQueue(client, req.body.mesa.hora, 120));
+    }else if(req.body.mesa.metodo_pago == 'Unico'){
+        //Cuando es cuenta unica
+        console.log('Unico')
+        await addClientToQueue(req.body.mesa.clientes[0], req.body.mesa.hora, 150)
+    }else if(req.body.mesa.metodo_pago == 'Tarjeta'){
+        //Cuando es cuenta tarjeta
+        console.log('Tarjeta')
+        await addClientToQueue(req.body.mesa.clientes[0], req.body.mesa.hora, 180)
+    }    
     let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
     billList.push({factura:{id : ++billCount, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, datos: currentBill}})
     res.send(billList[billList.length-1])
 })
 
-function addClientToCola(client, hour){
-//id,arrival,arrivalAcum,wait,service,exit,stadin,line
-    let client_cola = {id:client.id_client,hour_arrival:0,arrival:0,arrivalAcum:0,wait:0,service:120,exit:0, stading:0}
+function addClientToQueue(client, hour, service_param){
+    let service = service_param
+    //id,arrival,arrivalAcum,wait,service,exit,stadin,line
+    let client_queue = {id:client.id_client,hour_arrival:0,arrival:0,arrivalAcum:0,wait:0,service:service_param,exit:0, stading:0}
     //arrival
     let date = new Date(hour);
-    client_cola.hour_arrival = Math.abs(date.getTime() / 1000)
-    if(list_cola.length>0){
-        client_cola.arrival =  Math.abs(client_cola.hour_arrival - list_cola[list_cola.length-1].hour_arrival)
+    client_queue.hour_arrival = Math.abs(date.getTime() / 1000)
+    if(list_queue.length>0){
+        client_queue.arrival =  Math.abs(client_queue.hour_arrival - list_queue[list_queue.length-1].hour_arrival)
     }
     console.log("arrivo:  ",date.getTime() / 1000)
     //arrivalAcum
-    arrivalAcum += client_cola.arrival
-    client_cola.arrivalAcum = arrivalAcum
+    arrivalAcum += client_queue.arrival
+    client_queue.arrivalAcum = arrivalAcum
     //wait
-    if(list_cola.length>0){
-        client_cola.wait = (Math.max(list_cola[list_cola.length-1].exit, client_cola.arrivalAcum)) - client_cola.arrivalAcum
+    if(list_queue.length>0){
+        client_queue.wait = (Math.max(list_queue[list_queue.length-1].exit, client_queue.arrivalAcum)) - client_queue.arrivalAcum
     }
     //service
-    if(client_cola.arrival > serviceWait){
-        client_cola.service = service + 600
+    if(client_queue.arrival > serviceWait){
+        client_queue.service = service + 600
         count++
         serviceWait = serviceWait * count
     }else{
-        client_cola.service = service
+        client_queue.service = service
     }
     
     //exit 
-    client_cola.exit = client_cola.arrivalAcum + client_cola.wait + service
+    client_queue.exit = client_queue.arrivalAcum + client_queue.wait + service
     //stading
-    client_cola.stading = Math.abs(client_cola.arrivalAcum-client_cola.exit)
+    client_queue.stading = Math.abs(client_queue.arrivalAcum-client_queue.exit)
 
-    list_cola.push(client_cola)
+    list_queue.push(client_queue)
 }
 
 function generateBill(clients, paymentMethod){
@@ -139,6 +143,10 @@ function onlyOneMethod(clients, totalCost, platos){
 
 app.get('/bill', (req, res) => {
     res.send(billList)
+})
+
+app.get('/queue', (req, res) => {
+    res.send(list_queue)
 })
 
 app.listen(port, () => {

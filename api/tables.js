@@ -33,7 +33,7 @@ router.post('/new', async function (req, res) {
         await addClientToQueue(req.body.mesa.clientes[0], req.body.mesa.hora, 180)
     }    
     let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
-    billList.push({factura:{id : ++billCount, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, datos: currentBill}})
+    billList.push({factura:{id : ++billCount, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, platos:currentBill.platos, datos: currentBill}})
     res.send(billList[billList.length-1])
 })
 
@@ -133,7 +133,7 @@ function onlyOneMethod(clients, totalCost, platos){
             item.platos.forEach(order => {
                 let unitCost = menuList.filter(plato => plato.id == order);
                 totalCost += unitCost[0].cost
-                platos += `*${unitCost[0].id}-`
+                platos += `${unitCost[0].id}-`
             })
         })
         clients.total = totalCost

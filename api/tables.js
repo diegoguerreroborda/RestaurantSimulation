@@ -40,7 +40,7 @@ router.post('/new', async function (req, res) {
 function addClientToQueue(client, hour, service_param){
     let service = service_param
     //id,arrival,arrivalAcum,wait,service,exit,stadin,line
-    let client_queue = {id:client.id_client,hour_arrival:0,arrival:0,arrivalAcum:0,wait:0,service:service_param,exit:0, stading:0}
+    let client_queue = {id:client.id_cliente,hour_arrival:0,arrival:0,arrivalAcum:0,wait:0,service:service_param,exit:0, stading:0}
     //arrival
     let date = new Date(hour);
     client_queue.hour_arrival = Math.abs(date.getTime() / 1000)

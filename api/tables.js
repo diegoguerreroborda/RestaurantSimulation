@@ -83,7 +83,10 @@ function generateBill(clients, paymentMethod){
         case 'Americano':
             clients = americanMethod(clients)
         break;
-        case 'Unico' || 'Tarjeta':
+        case 'Unico':
+            clients = onlyOneMethod(clients, totalCost, platos)
+        break;
+        case 'Tarjeta':
             clients = onlyOneMethod(clients, totalCost, platos)
         break;
         default:

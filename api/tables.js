@@ -5,6 +5,7 @@ let arrivalAcum = 0
 let billCount = 0;
 let serviceWait = 7200
 let count = 1
+let countQueue = 1
 let billList = atmUtil.getBills
 let list_queue = atmUtil.getQueue
 let menuList = atmUtil.getDishes
@@ -40,7 +41,7 @@ router.post('/new', async function (req, res) {
 function addClientToQueue(client, hour, service_param){
     let service = service_param
     //id,arrival,arrivalAcum,wait,service,exit,stadin,line
-    let client_queue = {id:client.id_cliente,hour_arrival:0,arrival:0,arrivalAcum:0,wait:0,service:service_param,exit:0, stading:0}
+    let client_queue = {id:countQueue++,hour_arrival:0,arrival:0,arrivalAcum:0,wait:0,service:service_param,exit:0, stading:0}
     //arrival
     let date = new Date(hour);
     client_queue.hour_arrival = Math.abs(date.getTime() / 1000)

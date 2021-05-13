@@ -6,10 +6,10 @@ let billCount = 0;
 let serviceWait = 7200
 let count = 1
 let countQueue = 1
+let totalSold = 0
 let billList = atmUtil.getBills
 let list_queue = atmUtil.getQueue
 let menuList = atmUtil.getDishes
-
 
 router.get('/bill', async function (req, res) {
     res.json(billList)
@@ -17,6 +17,10 @@ router.get('/bill', async function (req, res) {
 
 router.get('/queue', async function (req, res) {
     res.json(list_queue)
+})
+
+router.get('/total_sold', (req, res) => {
+    res.send(totalSold)
 })
 
 router.post('/new', async function (req, res) {
@@ -35,6 +39,7 @@ router.post('/new', async function (req, res) {
     }    
     let currentBill = generateBill(req.body.mesa.clientes, req.body.mesa.metodo_pago)
     billList.push({factura:{id : ++billCount, id_mesa : req.body.mesa.id_mesa, total: currentBill.total, metodo_de_pago: currentBill.metodo_pago, platos:currentBill.platos, datos: currentBill}})
+    totalSold += currentBill.total
     res.send(billList[billList.length-1])
 })
 

@@ -20,7 +20,7 @@ router.get('/queue', async function (req, res) {
 })
 
 router.get('/total_sold', (req, res) => {
-    res.send(totalSold)
+    res.json(totalSold)
 })
 
 router.post('/new', async function (req, res) {
